@@ -4,11 +4,14 @@ import githubReducer from "./GithubReducer";
 const GITHUB_URL = process.env.REACT_APP_GITHUB_URL
 const GITHUB_TOKEN = process.env.REACT_APP_GITHUB_TOKEN
 
+
+
 const GithubContext = createContext()
 
 export const GithubProvider = ({children}) => {
   const initialState = {
     users: [],
+    user: {},
     isLoading: false
   }
 
@@ -24,7 +27,6 @@ export const GithubProvider = ({children}) => {
 
   // Get user based on search criteria
   const searchUsers = async (text) => {
-
     const params = new URLSearchParams({
       q: text
     })
@@ -43,6 +45,32 @@ export const GithubProvider = ({children}) => {
     })
   }
 
+
+  // Get user based on login
+  const getUser = async (login) => {
+
+    setLoading()
+    const response = await fetch(`${GITHUB_URL}/users/${login}`, {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`
+      }
+    })
+    console.log(response.status)
+    if (response.status === 404) {
+      window.location('/notfound')
+    } else {
+        const data = await response.json()
+
+        dispatch({
+          type: 'GET_USER',
+          payload: data,
+      })
+    }
+
+
+  }
+
+
   // Clear users after clicking clear button
   const clearUsers = () => {
     dispatch({
@@ -53,9 +81,11 @@ export const GithubProvider = ({children}) => {
 
   return <GithubContext.Provider value={{
     users: state.users,
+    user: state.user,
     isLoading: state.isLoading,
     searchUsers,
-    clearUsers
+    clearUsers,
+    getUser
   }}>
     {children}
   </GithubContext.Provider>
